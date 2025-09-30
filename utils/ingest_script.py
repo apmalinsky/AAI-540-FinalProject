@@ -1,3 +1,4 @@
+# This script was created with AI-assistance from Google Gemini
 import sys
 import boto3
 import pandas as pd
