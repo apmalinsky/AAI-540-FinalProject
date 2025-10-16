@@ -12,7 +12,6 @@ def process_data_chunk(df_chunk):
     """
     Performs feature engineering steps on a single chunk of the raw data.
     """
-    
     # Extract 'text' value from product_name field if it's a list of dicts.
     def extract_product_name(name_field):
         if isinstance(name_field, list) and len(name_field) > 0:
@@ -27,22 +26,22 @@ def process_data_chunk(df_chunk):
     def parse_nutriments(entry):
         if entry is None or (isinstance(entry, float) and np.isnan(entry)):
             return {}
-        if isinstance(entry, str):
-            try:
-                entry = json.loads(entry)
-            except Exception:
-                return {}
+
         out = {}
-        if isinstance(entry, list):
+        try:
             for d in entry:
-                name = d.get("name")
-                val = d.get("100g")
-                if name and val is not None:
-                    col = name.replace("-", "_") + "_100g"
-                    out[col] = val
-        elif isinstance(entry, dict):
-            for k, v in entry.items():
-                out[k] = v
+                if isinstance(d, dict):
+                    name = d.get("name")
+                    val = d.get("100g")
+                    if name and val is not None:
+                        col = name.replace("-", "_") + "_100g"
+                        out[col] = val
+        except TypeError:
+            if isinstance(entry, dict):
+                 for k, v in entry.items():
+                    out[k] = v
+            pass # Return empty dict if it's not a recognized format
+            
         return out
     
     # Apply parsing
@@ -81,11 +80,20 @@ def process_data_chunk(df_chunk):
     return features_df
 
 if __name__ == "__main__":
-    base_dir = "/opt/ml/processing"
-    input_data_path = "/opt/ml/processing/input"
+    # Get arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input-path", type=str, required=True)
+    args, _ = parser.parse_known_args()
     
+    base_dir = "/opt/ml/processing"
+    input_data_path = args.input_path
+
     # Load raw input data parquet files
-    all_files = [os.path.join(input_data_path, f) for f in os.listdir(input_data_path) if f.endswith('.parquet')]
+    all_files = [
+        os.path.join(input_data_path, f) 
+        for f in os.listdir(input_data_path)
+        if os.path.isfile(os.path.join(input_data_path, f)) # ignore utils
+    ]
 
     # Feature engineering in chunks
     chunk_size = 10000
@@ -106,6 +114,9 @@ if __name__ == "__main__":
     # Drop columns that are mostly missing (>50% NaN)
     mostly_missing = null_rates[null_rates > 0.50].index.tolist()
     
+    # Impute missing product_names
+    df['product_name'] = df['product_name'].fillna('nan_product_name')
+    
     if mostly_missing:
         print("Dropping:", mostly_missing)
         print(f"Dropping a total of {len(mostly_missing)} columns")
@@ -113,9 +124,6 @@ if __name__ == "__main__":
 
     # Drop extra target col
     df.drop('nutrition_score_fr_100g', axis=1)
-    
-    # Impute missing product_names
-    df['product_name'] = df['product_name'].fillna('nan_product_name')
 
     # Impute core nutrient values using the median
     median_impute_cols = [

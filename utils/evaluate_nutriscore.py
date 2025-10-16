@@ -16,14 +16,15 @@ if __name__ == "__main__":
     with tarfile.open(model_path) as tar:
         tar.extractall(path=".")
 
-    model = pickle.load(open("xgboost-model", "rb"))
+    # Create a new Booster object and load the model into it
+    model = xgboost.Booster()
+    model.load_model("xgboost-model")
 
     test_path = "/opt/ml/processing/test/test.csv"
     df = pd.read_csv(test_path, header=None)
 
     y_test = df.iloc[:, 0].to_numpy()
     df.drop(df.columns[0], axis=1, inplace=True)
-
     X_test = xgboost.DMatrix(df.values)
 
     predictions = model.predict(X_test)
@@ -43,4 +44,6 @@ if __name__ == "__main__":
     evaluation_path = f"{output_dir}/evaluation.json"
     with open(evaluation_path, "w") as f:
         f.write(json.dumps(report_dict))
+
+    print("Evaluation script finished successfully.")
         
