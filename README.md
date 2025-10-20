@@ -1,6 +1,6 @@
 ![Open Food Facts Logo](https://static.openfoodfacts.org/images/logos/off-logo-horizontal-light.svg)
 
-# FoodLens: An End-to-End MLOps Demo for Nutri-Score Prediction
+# FoodLens: An End-to-End MLOps Demo for Nutri-Score Prediction Using AWS SageMaker Notebooks 
 This project implements a production-ready, end-to-end Machine Learning Operations (MLOps) demo pipeline on AWS to predict the nutritional quality ("Nutri-Score") of food products.The system automatically trains, evaluates, deploys, and monitors an XGBoost regression model built on the [Open Food Facts dataset](https://world.openfoodfacts.org/) with a parquet download provided on [Hugging Face](https://huggingface.co/openfoodfacts). The goal is to provide a continuous nutrition score prediction, and more importantly, to build a robust, automated, and observable system around that model.
 
 This was developed as a final project for AAI-540: Machine Learning Operations at the University of San Diego.
